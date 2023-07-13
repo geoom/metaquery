@@ -3,7 +3,7 @@ require('dotenv').config()
 const mysql = require('mysql')
 const config = require('./config/database')
 
-async function useConnection (queryFn) {
+async function useConn (queryFn) {
   const connection = mysql.createConnection(config)
 
   try {
@@ -13,6 +13,19 @@ async function useConnection (queryFn) {
   }
 }
 
+function exec (dbConn, statement) {
+  return new Promise((resolve) => {
+    dbConn.query(statement, (error, results) => {
+      if (error) {
+        throw error
+      }
+      
+      resolve(results)
+    })
+  })
+}
+
 module.exports = {
-  useConnection
+  useConn,
+  exec
 }
