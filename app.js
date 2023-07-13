@@ -15,18 +15,22 @@ async function startApp () {
 
     debug('databases count: ', databases.length)
 
-    const sqlStatement = `sql statemente`
+    const sqlStatement = `SQL`
 
     const allMyResults = []
-    for (database of databases) {
-      debug(`USE ${database}`)
+    for ([index, database] of databases.entries()) {
+      debug(`USE ${database} ...`)
       await exec(dbConn, `USE ${database}`)
       const myresult = 
         await exec(dbConn, sqlStatement)
       const jsonResult = JSON.parse(JSON.stringify(myresult))
       
       if (myresult.length > 0) allMyResults.push([database, jsonResult])
+
+      debug(`progress: ${(index+1)/databases.length*100}%`)
     }
+
+    debug("Result size: ", allMyResults.length)
   })
 }
 
