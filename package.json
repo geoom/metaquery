@@ -22,7 +22,8 @@
   },
   "homepage": "https://github.com/geoom/metaquery#readme",
   "dependencies": {
-    "dotenv": "^16.0.2"
+    "dotenv": "^16.0.2",
+    "mysql": "^2.18.1"
   },
   "devDependencies": {
     "debug": "^4.3.4"
