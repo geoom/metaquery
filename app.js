@@ -24,10 +24,7 @@ function jsonToCsv(items) {
   return csv
 }
 
-const DBNAME_FILTER_REGEX = /.*/i
-const SQL_STATEMENT = `
-  SELECT DATABASE() as tenant;
-`
+const DBNAME_FILTER_REGEX = new RegExp(process.env.DBNAME_FILTER_REGEX)
 
 async function startApp () {
   console.time('Execution time')
@@ -35,24 +32,34 @@ async function startApp () {
   await useConn(async function (dbConn) {
     debug('METAQUERY STARTS ****\n')
 
-    const results = await exec(dbConn, 'SHOW databases')
-    const databases = results
-      .map( result => result['Database'])
-      .filter( dbName => DBNAME_FILTER_REGEX.test(dbName))
-    
+    let databases =
+      process.env.DATABASE_LIST ? process.env.DATABASE_LIST.split(',') : []
+
+    if (databases.length == 0) {
+      const results = await exec(dbConn, 'SHOW databases')
+
+      databases = results
+        .map(result => result['Database'])
+        .filter(dbName => DBNAME_FILTER_REGEX.test(dbName))
+    }
+
     const allMyResults = []
     for ([index, database] of databases.entries()) {
       debug(`USING ${database} ...`)
 
-      await exec(dbConn, `USE ${database}`)
+      try {
+        await exec(dbConn, `USE ${database}`)
 
-      const myresult = 
-        await exec(dbConn, SQL_STATEMENT)
-      const jsonResult = JSON.parse(JSON.stringify(myresult))
-      
-      if (myresult.length > 0) allMyResults.push(jsonResult)
+        const myresult =
+          await exec(dbConn, process.env.SQL_STATEMENT)
+        const jsonResult = JSON.parse(JSON.stringify(myresult))
 
-      const progress = parseInt((index+1)/databases.length*100)
+        if (myresult.length > 0) allMyResults.push(jsonResult)
+      } catch (error) {
+        debug(`Error executing query on ${database}: ${error.message}`)
+      }
+
+      const progress = parseInt((index + 1) / databases.length * 100)
       debug(`progress ----------------------------> ${progress}%`)
     }
 
@@ -60,14 +67,14 @@ async function startApp () {
 
     debug('Databases affected size: ', allMyResults.length)
 
-    if(allMyResults.length==0){
+    if (allMyResults.length == 0) {
       debug("RESULTS: no data :(\n")
     } else {
       const csv = jsonToCsv(allMyResults.flat(1))
 
       fs.appendFile('results.csv', csv, function (err) {
-        if (err) throw err;
-        console.log('RESULTS: results.csv created!\n');
+        if (err) throw err
+        console.log('RESULTS: results.csv created!\n')
       })
     }
   })
