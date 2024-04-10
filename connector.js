@@ -2,6 +2,8 @@ require('dotenv').config()
 
 const mysql = require('mysql')
 const config = require('./config/database')
+const debug = require('debug')('.')
+
 
 async function useConn (queryFn) {
   const connection = mysql.createConnection(config)
@@ -17,9 +19,9 @@ function exec (dbConn, statement) {
   return new Promise((resolve) => {
     dbConn.query(statement, (error, results) => {
       if (error) {
-        throw error
+        debug(`Error executing query on ${database}: ${error.message}`)
       }
-      
+
       resolve(results)
     })
   })
