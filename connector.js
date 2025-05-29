@@ -16,10 +16,11 @@ async function useConn (queryFn) {
 }
 
 function exec (dbConn, statement) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     dbConn.query(statement, (error, results) => {
       if (error) {
-        debug(`Error executing query on ${database}: ${error.message}`)
+        debug(`Error executing query: ${error.message}`)
+        reject(error);
       }
 
       resolve(results)
